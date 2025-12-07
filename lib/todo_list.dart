@@ -1,124 +1,64 @@
 import 'package:flutter/material.dart';
-import 'todo_item.dart';
-import 'todo_detail.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';  // Riverpod をインポート
+import 'providers.dart';
 
-class TodoListPage extends StatefulWidget {
+
+class TodoListPage extends ConsumerWidget { // ConsumerWidget を継承
   const TodoListPage({super.key});
 
   @override
-  TodoListPageState createState() => TodoListPageState();
-}
-
-class TodoListPageState extends State {
-  int bottomBarIndex = 0;
-  List<TodoItem> get shownList =>
-    bottomBarIndex == 0 ? unCompletedList : completedList;
-  final List<TodoItem> unCompletedList = [
-    TodoItem(
-      id: 0,
-      title: 'Flutter',
-      content: 'Flutter を勉強する',
-      isCompleted: false,
-    ),
-    TodoItem(
-      id: 1,
-      title: '買い物',
-      content: '卵を買う',
-      isCompleted: false,
-    ),
-  ];
-  List<TodoItem> completedList = [
-    TodoItem(
-      id: 2,
-      title: '課題',
-      content: '月 3 レポート',
-      isCompleted: true,
-    ),
-  ];
-
-  void replaceTodoItem(int index) {
-    setState(
-      () {
-        final tappedItem = shownList[index];
-        final removeFrom =
-          tappedItem.isCompleted ? completedList : unCompletedList;
-        final addTo = tappedItem.isCompleted ? unCompletedList : completedList;
-        addTo.add(tappedItem..toggleIsCompleted());
-        removeFrom.removeAt(index);
-      },
-    );
-  }
-
-  void changeBottomBarIndex(int index) {
-    setState(
-      () {
-        bottomBarIndex = index;
-      },
-    );
-  }
-
-  void addTodoItem(Map<String, String> formValue) {
-    setState(
-      () {
-        unCompletedList.add(
-          TodoItem(
-            id: unCompletedList.length + completedList.length,
-            title: formValue['title']!,
-            content: formValue['content']!,
-            isCompleted: false,
-          ),
-        );
-      },
-    );
-  }
-
-  void toAddPage() {
-    Navigator.of(context).pushNamed(
-      '/add',
-      arguments: addTodoItem,
-    );
-  }
-
-  void toDetailPage(int index) {
-    Navigator.of(context).pushNamed(
-      '/detail',
-      arguments:
-        TodoDetailArguments(index, shownList[index], replaceTodoItem),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) { // WidgetRef を引数に追加
+    // 一覧ページでは状態が変化すると同時にウィジェットを再描画する必要があるため
+    // ref.watch を使用
+    final todoItems = ref.watch(todoProvider);
+    final todoNotifier = ref.read(todoProvider.notifier);
+    final completedItemCount = todoNotifier.getCompletedItemCount();
+    final incompletedItemCount = todoNotifier.getIncompletedItemCount();
+    final bottomBarIndex = ref.watch(bottomBarProvider);
+    final bottomBarIndexNotifier = ref.read(bottomBarProvider.notifier);
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         title: Text(
-          'ToDo 一覧（完了済み ${completedList.length} / ${unCompletedList.length + completedList.length}）',
+          // completedItemCount と incompletedItemCount の取得
+          'ToDo 一覧（完了済み $completedItemCount / ${completedItemCount + incompletedItemCount}）',
         ),
       ),
       body: Center(
         child: ListView.builder(
-          itemCount: shownList.length,
+          itemCount: todoItems.length,
           itemBuilder: (context, index) {
-            return Card(
-              child: ListTile(
-                title: Text('${index + 1}  ${shownList[index].title}'),
+            if (!todoItems[index].isCompleted && bottomBarIndex == 0 || todoItems[index].isCompleted && bottomBarIndex == 1) {
+              return ListTile(
+                title: Text('${todoItems[index].id + 1} ${todoItems[index].title}'),
                 trailing: Checkbox(
                   activeColor: Colors.green,
                   checkColor: Colors.white,
                   onChanged: (value) {
-                    replaceTodoItem(index);
+                    // チェックボックスが変更されたときの処理
+                    todoNotifier.replaceTodoItem(todoItems[index].id);
                   },
-                  value: shownList[index].isCompleted,
+                  value: todoItems[index].isCompleted,
                 ),
-                onTap: () => {toDetailPage(index)},
-              ),
-            );
+                onTap: () {
+                  Navigator.of(context).pushNamed(
+                    // 詳細ページには、タップされたアイテムのインデックスを伝える
+                    '/detail',
+                    arguments: todoItems[index].id,
+                  );
+                },
+              );
+            } else {
+              return const SizedBox.shrink();
+            }
           },
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: toAddPage,
+        onPressed: () {  // 修正
+          Navigator.of(context).pushNamed(
+              '/add',
+          );
+        },
         child: const Icon(Icons.add),
       ),
       bottomNavigationBar: BottomNavigationBar(
@@ -132,8 +72,8 @@ class TodoListPageState extends State {
             label: '完了',
           ),
         ],
-        onTap: changeBottomBarIndex,
-        currentIndex: bottomBarIndex,
+        onTap: bottomBarIndexNotifier.changeBottomBarIndex,  // 修正
+        currentIndex: bottomBarIndex, // 修正
         selectedItemColor: Colors.blue,
       ),
     );
