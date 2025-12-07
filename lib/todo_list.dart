@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';  // Riverpod をインポート
+import 'package:flutter_riverpod/flutter_riverpod.dart'; // Riverpod をインポート
 import 'providers.dart';
 
-
-class TodoListPage extends ConsumerWidget { // ConsumerWidget を継承
+class TodoListPage extends ConsumerWidget {
+  // ConsumerWidget を継承
   const TodoListPage({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) { // WidgetRef を引数に追加
+  Widget build(BuildContext context, WidgetRef ref) {
+    // WidgetRef を引数に追加
     // 一覧ページでは状態が変化すると同時にウィジェットを再描画する必要があるため
     // ref.watch を使用
     final todoItems = ref.watch(todoProvider);
@@ -18,6 +19,7 @@ class TodoListPage extends ConsumerWidget { // ConsumerWidget を継承
     final bottomBarIndexNotifier = ref.read(bottomBarProvider.notifier);
     return Scaffold(
       appBar: AppBar(
+        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         title: Text(
           // completedItemCount と incompletedItemCount の取得
           'ToDo 一覧（完了済み $completedItemCount / ${completedItemCount + incompletedItemCount}）',
@@ -27,25 +29,30 @@ class TodoListPage extends ConsumerWidget { // ConsumerWidget を継承
         child: ListView.builder(
           itemCount: todoItems.length,
           itemBuilder: (context, index) {
-            if (!todoItems[index].isCompleted && bottomBarIndex == 0 || todoItems[index].isCompleted && bottomBarIndex == 1) {
-              return ListTile(
-                title: Text('${todoItems[index].id + 1} ${todoItems[index].title}'),
-                trailing: Checkbox(
-                  activeColor: Colors.green,
-                  checkColor: Colors.white,
-                  onChanged: (value) {
-                    // チェックボックスが変更されたときの処理
-                    todoNotifier.replaceTodoItem(todoItems[index].id);
+            if (!todoItems[index].isCompleted && bottomBarIndex == 0 ||
+                todoItems[index].isCompleted && bottomBarIndex == 1) {
+              return Card(
+                child: ListTile(
+                  title: Text(
+                    '${todoItems[index].id + 1} ${todoItems[index].title}',
+                  ),
+                  trailing: Checkbox(
+                    activeColor: Colors.green,
+                    checkColor: Colors.white,
+                    onChanged: (value) {
+                      // チェックボックスが変更されたときの処理
+                      todoNotifier.replaceTodoItem(todoItems[index].id);
+                    },
+                    value: todoItems[index].isCompleted,
+                  ),
+                  onTap: () {
+                    Navigator.of(context).pushNamed(
+                      // 詳細ページには、タップされたアイテムのインデックスを伝える
+                      '/detail',
+                      arguments: todoItems[index].id,
+                    );
                   },
-                  value: todoItems[index].isCompleted,
                 ),
-                onTap: () {
-                  Navigator.of(context).pushNamed(
-                    // 詳細ページには、タップされたアイテムのインデックスを伝える
-                    '/detail',
-                    arguments: todoItems[index].id,
-                  );
-                },
               );
             } else {
               return const SizedBox.shrink();
@@ -54,25 +61,18 @@ class TodoListPage extends ConsumerWidget { // ConsumerWidget を継承
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {  // 修正
-          Navigator.of(context).pushNamed(
-              '/add',
-          );
+        onPressed: () {
+          // 修正
+          Navigator.of(context).pushNamed('/add');
         },
         child: const Icon(Icons.add),
       ),
       bottomNavigationBar: BottomNavigationBar(
         items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.unpublished),
-            label: '未完了',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.check_circle),
-            label: '完了',
-          ),
+          BottomNavigationBarItem(icon: Icon(Icons.unpublished), label: '未完了'),
+          BottomNavigationBarItem(icon: Icon(Icons.check_circle), label: '完了'),
         ],
-        onTap: bottomBarIndexNotifier.changeBottomBarIndex,  // 修正
+        onTap: bottomBarIndexNotifier.changeBottomBarIndex, // 修正
         currentIndex: bottomBarIndex, // 修正
         selectedItemColor: Colors.blue,
       ),
