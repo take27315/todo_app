@@ -1,28 +1,16 @@
 import 'package:flutter/material.dart';
 import 'todo_item.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart'; // Riverpod をインポート
+import 'providers.dart';
 
-class TodoDetailArguments {
-  TodoDetailArguments(this.index, this.todoItem, this.replaceTodoItem);
-
-  final int index;
-  final TodoItem todoItem;
-  final Function(int) replaceTodoItem;
-}
-
-class TodoDetailPage extends StatelessWidget {
-  const TodoDetailPage({
-    super.key,
-    required this.index,
-    required this.todoItem,
-    required this.replaceTodoItem,
-  });
-
-  final int index;
-  final TodoItem todoItem;
-  final Function(int) replaceTodoItem;
+class TodoDetailPage extends ConsumerWidget {
+  const TodoDetailPage({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final index = ModalRoute.of(context)!.settings.arguments! as int;
+    final todoItems = ref.read(todoProvider);
+    final todoNotifier = ref.read(todoProvider.notifier);
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
@@ -44,7 +32,7 @@ class TodoDetailPage extends StatelessWidget {
                 child: Container(
                   margin: const EdgeInsets.all(12),
                   width: 300,
-                  child: Text(todoItem.title),
+                  child: Text(todoItems[index].title),
                 ),
               ),
               Container(
@@ -58,7 +46,7 @@ class TodoDetailPage extends StatelessWidget {
                   margin: const EdgeInsets.all(8),
                   width: 300,
                   height: 200,
-                  child: Text(todoItem.content),
+                  child: Text(todoItems[index].content),
                 ),
               ),
               SizedBox(
@@ -66,12 +54,12 @@ class TodoDetailPage extends StatelessWidget {
                 height: 40,
                 child: ElevatedButton(
                   onPressed: () {
-                    replaceTodoItem(index);
+                    todoNotifier.replaceTodoItem(index);
                     Navigator.of(context).pop();
                   },
-                  child: todoItem.isCompleted
-                    ? const Text('未完了にする')
-                    : const Text('完了にする'),
+                  child: todoItems[index].isCompleted
+                      ? const Text('未完了にする')
+                      : const Text('完了にする'),
                 ),
               ),
             ],

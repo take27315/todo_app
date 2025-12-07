@@ -40,7 +40,7 @@ class TodoListNotifier extends Notifier<List<TodoItem>> {
         title: formValue['title']!,
         content: formValue['content']!,
         isCompleted: false,
-      )
+      ),
     ];
   }
 

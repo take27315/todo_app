@@ -24,26 +24,7 @@ class MyTodoApp extends StatelessWidget {
       routes: {
         '/': (context) => const TodoListPage(),
         '/add': (context) => const TodoAddPage(),
-      },
-      onGenerateRoute: (settings) {
-        if (settings.name == '/detail') {
-          final args = settings.arguments as TodoDetailArguments;
-          return MaterialPageRoute(
-            builder: (context) {
-              return TodoDetailPage(
-                index: args.index,
-                todoItem: args.todoItem,
-                replaceTodoItem: args.replaceTodoItem,
-              );
-            },
-          );
-        } else {
-          return MaterialPageRoute(
-            builder: (context) {
-              return const TodoListPage();
-            },
-          );
-        }
+        '/detail': (context) => const TodoDetailPage(),
       },
     );
   }
