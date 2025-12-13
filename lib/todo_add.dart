@@ -1,22 +1,23 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'providers.dart';
 
-class TodoAddPage extends StatefulWidget {
+class TodoAddPage extends ConsumerStatefulWidget {
   const TodoAddPage({super.key});
 
   @override
-  TodoAddPageState createState() => TodoAddPageState();
+  ConsumerState<TodoAddPage> createState() => _TodoAddPageState();
 }
 
-class TodoAddPageState extends State<TodoAddPage> {
+class _TodoAddPageState extends ConsumerState<TodoAddPage> {
   final formKey = GlobalKey<FormState>();
   final titleFormKey = GlobalKey<FormFieldState<String>>();
   final contentFormKey = GlobalKey<FormFieldState<String>>();
   Map<String, String> formValue = {};
 
+  //WidgetRefはConsumerStateに含まれてるからいらない。
   @override
   Widget build(BuildContext context) {
-    final addTodoItem = ModalRoute.of(context)!.settings.arguments! as Function;
-
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
@@ -34,9 +35,7 @@ class TodoAddPageState extends State<TodoAddPage> {
                 width: 300,
                 child: TextFormField(
                   key: titleFormKey,
-                  decoration: const InputDecoration(
-                    labelText: 'タイトル',
-                  ),
+                  decoration: const InputDecoration(labelText: 'タイトル'),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
                       return 'タイトルを入力してください。';
@@ -64,8 +63,8 @@ class TodoAddPageState extends State<TodoAddPage> {
                   minLines: 8,
                   validator: (value) {
                     return value == null || value.isEmpty
-                      ? '内容を入力してください。'
-                      : null;
+                        ? '内容を入力してください。'
+                        : null;
                   },
                 ),
               ),
@@ -75,9 +74,11 @@ class TodoAddPageState extends State<TodoAddPage> {
                 child: ElevatedButton(
                   onPressed: () {
                     if (formKey.currentState!.validate()) {
-                      formValue['title'] = titleFormKey.currentState?.value ?? '';
-                      formValue['content'] = contentFormKey.currentState?.value ?? '';
-                      addTodoItem(formValue);
+                      formValue['title'] =
+                          titleFormKey.currentState?.value ?? '';
+                      formValue['content'] =
+                          contentFormKey.currentState?.value ?? '';
+                      ref.read(todoProvider.notifier).addTodoItem(formValue);
                       Navigator.of(context).pop();
                     }
                   },
