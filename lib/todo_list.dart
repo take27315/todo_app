@@ -41,20 +41,26 @@ class TodoListPage extends ConsumerWidget {
               itemCount: todos.length,
               itemBuilder: (context, index) {
                 final todo = todos[index];
-                if (!todo.isCompleted && bottomBarIndex == 0 || todo.isCompleted && bottomBarIndex == 1) {
+                if (!todo.isCompleted && bottomBarIndex == 0 ||
+                    todo.isCompleted && bottomBarIndex == 1) {
                   return Card(
                     child: ListTile(
                       title: Text(todo.title),
                       trailing: Checkbox(
                         activeColor: Colors.green,
                         checkColor: Colors.white,
-                        onChanged: (_){
+                        onChanged: (_) {
                           database.changeTodoItem(todo.id, todo.isCompleted);
                           ref.invalidate(todoProvider);
+                          ref.invalidate(todoDetailProvider);
                         },
                         value: todo.isCompleted,
                       ),
-                      onTap: (){},
+                      onTap: () {
+                        Navigator.of(
+                          context,
+                        ).pushNamed('/detail', arguments: todo.id);
+                      },
                     ),
                   );
                 } else {
@@ -68,21 +74,15 @@ class TodoListPage extends ConsumerWidget {
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: (){
-          Navigator.of(context).pushNamed('/add',);
+        onPressed: () {
+          Navigator.of(context).pushNamed('/add');
         },
         child: const Icon(Icons.add),
       ),
       bottomNavigationBar: BottomNavigationBar(
         items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.unpublished),
-            label: '未完了',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.check_circle),
-            label: '完了',
-          ),
+          BottomNavigationBarItem(icon: Icon(Icons.unpublished), label: '未完了'),
+          BottomNavigationBarItem(icon: Icon(Icons.check_circle), label: '完了'),
         ],
         onTap: bottomBarIndexNotifier.changeBottomBarIndex,
         currentIndex: bottomBarIndex,

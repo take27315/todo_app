@@ -42,6 +42,21 @@ class TodoItemDatabase {
     }).toList();
   }
 
+  Future<TodoItem> getTodoItemById(int id) async {
+    final List<Map<String, dynamic>> rows = await database.query(
+      //一覧ページで選択した項目のIDからそのレコードに対応するデータを取得する
+      'TodoItem',
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+    return TodoItem(
+      id: rows[0]['id'],
+      title: rows[0]['title'],
+      content: rows[0]['content'],
+      isCompleted: rows[0]['isCompleted'] == 1,
+    );
+  }
+
   Future<void> insertTodoItem(Map<String, String> formValue) async {
     await database.insert('TodoItem', {
       'title': formValue['title'],
