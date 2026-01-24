@@ -1,80 +1,91 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart'; // Riverpod をインポート
-import 'providers.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import 'todo_db.dart';
+import 'providers_db.dart';
 
 class TodoListPage extends ConsumerWidget {
-  // ConsumerWidget を継承
   const TodoListPage({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // WidgetRef を引数に追加
-    // 一覧ページでは状態が変化すると同時にウィジェットを再描画する必要があるため
-    // ref.watch を使用
+    final database = TodoItemDatabase();
     final todoItems = ref.watch(todoProvider);
-    final todoNotifier = ref.read(todoProvider.notifier);
-    final completedItemCount = todoNotifier.getCompletedItemCount();
-    final incompletedItemCount = todoNotifier.getIncompletedItemCount();
     final bottomBarIndex = ref.watch(bottomBarProvider);
     final bottomBarIndexNotifier = ref.read(bottomBarProvider.notifier);
+
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        title: Text(
-          // completedItemCount と incompletedItemCount の取得
-          'ToDo 一覧（完了済み $completedItemCount / ${completedItemCount + incompletedItemCount}）',
-        ),
-      ),
-      body: Center(
-        child: ListView.builder(
-          itemCount: todoItems.length,
-          itemBuilder: (context, index) {
-            if (!todoItems[index].isCompleted && bottomBarIndex == 0 ||
-                todoItems[index].isCompleted && bottomBarIndex == 1) {
-              return Card(
-                child: ListTile(
-                  title: Text(
-                    '${todoItems[index].id + 1} ${todoItems[index].title}',
-                  ),
-                  trailing: Checkbox(
-                    activeColor: Colors.green,
-                    checkColor: Colors.white,
-                    onChanged: (value) {
-                      // チェックボックスが変更されたときの処理
-                      todoNotifier.replaceTodoItem(todoItems[index].id);
-                    },
-                    value: todoItems[index].isCompleted,
-                  ),
-                  onTap: () {
-                    Navigator.of(context).pushNamed(
-                      // 詳細ページには、タップされたアイテムのインデックスを伝える
-                      '/detail',
-                      arguments: todoItems[index].id,
-                    );
-                  },
-                ),
-              );
-            } else {
-              return const SizedBox.shrink();
+        title: FutureBuilder<List<int>>(
+          future: Future.wait([
+            database.getTodoItemsCount(),
+            database.getCompletedTodoItemsCount(),
+          ]),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Text('loading...');
             }
+            if (snapshot.hasError) {
+              return Text('Errors:${snapshot.error}');
+            }
+            final sum = snapshot.data![0];
+            final completedItemLength = snapshot.data![1];
+            return Text('ToDo 一覧（完了済み $completedItemLength/$sum)');
           },
         ),
       ),
+      body: Center(
+        child: todoItems.when(
+          data: (todos) {
+            return ListView.builder(
+              itemCount: todos.length,
+              itemBuilder: (context, index) {
+                final todo = todos[index];
+                if (!todo.isCompleted && bottomBarIndex == 0 || todo.isCompleted && bottomBarIndex == 1) {
+                  return Card(
+                    child: ListTile(
+                      title: Text(todo.title),
+                      trailing: Checkbox(
+                        activeColor: Colors.green,
+                        checkColor: Colors.white,
+                        onChanged: (_){
+                          database.changeTodoItem(todo.id, todo.isCompleted);
+                          ref.invalidate(todoProvider);
+                        },
+                        value: todo.isCompleted,
+                      ),
+                      onTap: (){},
+                    ),
+                  );
+                } else {
+                  return const SizedBox.shrink();
+                }
+              },
+            );
+          },
+          error: (err, stack) => const Text('エラーが発生しました'),
+          loading: () => const Text('ロード中'),
+        ),
+      ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          // 修正
-          Navigator.of(context).pushNamed('/add');
+        onPressed: (){
+          Navigator.of(context).pushNamed('/add',);
         },
         child: const Icon(Icons.add),
       ),
       bottomNavigationBar: BottomNavigationBar(
         items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.unpublished), label: '未完了'),
-          BottomNavigationBarItem(icon: Icon(Icons.check_circle), label: '完了'),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.unpublished),
+            label: '未完了',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.check_circle),
+            label: '完了',
+          ),
         ],
-        onTap: bottomBarIndexNotifier.changeBottomBarIndex, // 修正
-        currentIndex: bottomBarIndex, // 修正
-        selectedItemColor: Colors.blue,
+        onTap: bottomBarIndexNotifier.changeBottomBarIndex,
+        currentIndex: bottomBarIndex,
       ),
     );
   }

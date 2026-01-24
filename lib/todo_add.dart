@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'providers.dart';
+// import 'providers.dart';
+import 'todo_db.dart';
+import 'providers_db.dart';
 
 class TodoAddPage extends ConsumerStatefulWidget {
   const TodoAddPage({super.key});
@@ -18,6 +20,7 @@ class _TodoAddPageState extends ConsumerState<TodoAddPage> {
   //WidgetRefはConsumerStateに含まれてるからいらない。
   @override
   Widget build(BuildContext context) {
+    final database = TodoItemDatabase();
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
@@ -78,7 +81,9 @@ class _TodoAddPageState extends ConsumerState<TodoAddPage> {
                           titleFormKey.currentState?.value ?? '';
                       formValue['content'] =
                           contentFormKey.currentState?.value ?? '';
-                      ref.read(todoProvider.notifier).addTodoItem(formValue);
+                      // ref.read(todoProvider.notifier).addTodoItem(formValue);
+                      database.insertTodoItem(formValue);
+                      ref.invalidate(todoProvider);
                       Navigator.of(context).pop();
                     }
                   },
