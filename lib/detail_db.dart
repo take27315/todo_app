@@ -55,16 +55,24 @@ class TodoDetailPage extends ConsumerWidget {
                       child: Text(todo.content),
                     ),
                   ),
+                  Container(
+                    alignment: Alignment.centerLeft,
+                    margin: const EdgeInsets.only(bottom: 32),
+                    child: Text(
+                      todo.priority == 0
+                          ? '優先度：高'
+                          : todo.priority == 1
+                          ? '優先度：中'
+                          : '優先度：低',
+                    ),
+                  ),
                   SizedBox(
                     width: 300,
                     height: 40,
                     child: ElevatedButton(
                       onPressed: () {
                         // todoNotifier.replaceTodoItem(index);
-                        database.changeTodoItem(
-                          todo.id,
-                          todo.isCompleted,
-                        );
+                        database.changeTodoItem(todo.id, todo.isCompleted);
                         ref.invalidate(todoProvider);
                         ref.invalidate(todoDetailProvider);
                         Navigator.of(context).pop();

@@ -15,7 +15,9 @@ class _TodoAddPageState extends ConsumerState<TodoAddPage> {
   final formKey = GlobalKey<FormState>();
   final titleFormKey = GlobalKey<FormFieldState<String>>();
   final contentFormKey = GlobalKey<FormFieldState<String>>();
-  Map<String, String> formValue = {};
+  int selectedPriority = 0; // ラジオボタンの値を保持するための変数
+  final radioLabels = ['高', '中', '低']; // ラジオボタンのラベル
+  Map<String, dynamic> formValue = {};
 
   //WidgetRefはConsumerStateに含まれてるからいらない。
   @override
@@ -71,6 +73,31 @@ class _TodoAddPageState extends ConsumerState<TodoAddPage> {
                   },
                 ),
               ),
+              Container(
+                margin: const EdgeInsets.only(bottom: 32),
+                width: 300,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    for (final radioButtonValue in [0, 1, 2])
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Radio(
+                            value: radioButtonValue,
+                            groupValue: selectedPriority,
+                            onChanged: (value) {
+                              setState(() {
+                                selectedPriority = value ?? 0;
+                              });
+                            },
+                          ),
+                          Text(radioLabels[radioButtonValue]),
+                        ],
+                      ),
+                  ],
+                ),
+              ),
               SizedBox(
                 width: 300,
                 height: 40,
@@ -81,6 +108,7 @@ class _TodoAddPageState extends ConsumerState<TodoAddPage> {
                           titleFormKey.currentState?.value ?? '';
                       formValue['content'] =
                           contentFormKey.currentState?.value ?? '';
+                      formValue['priority'] = selectedPriority;
                       // ref.read(todoProvider.notifier).addTodoItem(formValue);
                       database.insertTodoItem(formValue);
                       ref.invalidate(todoProvider);

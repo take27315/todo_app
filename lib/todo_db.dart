@@ -14,10 +14,11 @@ class TodoItemDatabase {
       1: [
         'CREATE TABLE TodoItem(id INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT, content TEXT, isCompleted INTEGER);',
       ],
+      2: ['ALTER TABLE TodoItem ADD COLUMN priority INTEGER DEFAULT 1'],
     };
     database = await openDatabase(
       join(await getDatabasesPath(), 'database.db'),
-      version: 1,
+      version: 2,
       onUpgrade: (db, oldVersion, newVersion) async {
         for (var i = oldVersion + 1; i <= newVersion; i++) {
           final queries = scripts[i] ?? [];
@@ -38,6 +39,7 @@ class TodoItemDatabase {
         title: item['title'],
         content: item['content'],
         isCompleted: item['isCompleted'] == 1,
+        priority: item['priority'],
       );
     }).toList();
   }
@@ -54,14 +56,16 @@ class TodoItemDatabase {
       title: rows[0]['title'],
       content: rows[0]['content'],
       isCompleted: rows[0]['isCompleted'] == 1,
+      priority: rows[0]['priority'],
     );
   }
 
-  Future<void> insertTodoItem(Map<String, String> formValue) async {
+  Future<void> insertTodoItem(Map<String, dynamic> formValue) async {
     await database.insert('TodoItem', {
       'title': formValue['title'],
       'content': formValue['content'],
       'isCompleted': 0,
+      'priority': formValue['priority'],
     }, conflictAlgorithm: ConflictAlgorithm.ignore);
   }
 
@@ -92,10 +96,12 @@ class TodoItem {
     required this.title,
     required this.content,
     required this.isCompleted,
+    required this.priority,
   });
 
   final int id;
   final String title;
   final String content;
   final bool isCompleted;
+  final int priority;
 }
