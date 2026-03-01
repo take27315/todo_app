@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-// import 'providers.dart';
-import 'todo_db.dart';
+import 'package:intl/intl.dart';
+
 import 'providers_db.dart';
+import 'todo_db.dart';
 
 class TodoAddPage extends ConsumerStatefulWidget {
   const TodoAddPage({super.key});
@@ -12,22 +13,25 @@ class TodoAddPage extends ConsumerStatefulWidget {
 }
 
 class _TodoAddPageState extends ConsumerState<TodoAddPage> {
+  final database = TodoItemDatabase();
   final formKey = GlobalKey<FormState>();
   final titleFormKey = GlobalKey<FormFieldState<String>>();
   final contentFormKey = GlobalKey<FormFieldState<String>>();
-  int selectedPriority = 0; // ラジオボタンの値を保持するための変数
-  final radioLabels = ['高', '中', '低']; // ラジオボタンのラベル
+  int selectedPriority = 0;
+  final radioLabels = ['高', '中', '低'];
+  final deadlineController = TextEditingController();
   Map<String, dynamic> formValue = {};
 
-  //WidgetRefはConsumerStateに含まれてるからいらない。
+  @override
+  void dispose() {
+    deadlineController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
-    final database = TodoItemDatabase();
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        title: const Text('Todo 追加'),
-      ),
+      appBar: AppBar(title: const Text('Todo 追加')),
       body: Form(
         key: formKey,
         child: Center(
@@ -98,6 +102,34 @@ class _TodoAddPageState extends ConsumerState<TodoAddPage> {
                   ],
                 ),
               ),
+              Container(
+                margin: const EdgeInsets.only(bottom: 32),
+                padding: const EdgeInsets.all(4),
+                width: 300,
+                child: TextFormField(
+                  controller: deadlineController,
+                  decoration: const InputDecoration(labelText: 'Deadline'),
+                  onTap: () async {
+                    FocusScope.of(context).requestFocus(FocusNode());
+                    final selectedDate = await showDatePicker(
+                      context: context,
+                      initialDate: DateTime.now(),
+                      firstDate: DateTime(2022),
+                      lastDate: DateTime(2100),
+                    );
+                    if (selectedDate != null) {
+                      deadlineController.text = DateFormat(
+                        'yyyy-MM-dd',
+                      ).format(selectedDate);
+                    }
+                  },
+                  validator: (value) {
+                    return value == null || value.isEmpty
+                        ? '期限を決めてください。'
+                        : null;
+                  },
+                ),
+              ),
               SizedBox(
                 width: 300,
                 height: 40,
@@ -109,7 +141,7 @@ class _TodoAddPageState extends ConsumerState<TodoAddPage> {
                       formValue['content'] =
                           contentFormKey.currentState?.value ?? '';
                       formValue['priority'] = selectedPriority;
-                      // ref.read(todoProvider.notifier).addTodoItem(formValue);
+                      formValue['deadline'] = deadlineController.text;
                       database.insertTodoItem(formValue);
                       ref.invalidate(todoProvider);
                       Navigator.of(context).pop();

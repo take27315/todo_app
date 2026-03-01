@@ -18,7 +18,7 @@ class TodoItemDatabase {
     };
     database = await openDatabase(
       join(await getDatabasesPath(), 'database.db'),
-      version: 2,
+      version: 3,
       onUpgrade: (db, oldVersion, newVersion) async {
         for (var i = oldVersion + 1; i <= newVersion; i++) {
           final queries = scripts[i] ?? [];
@@ -40,6 +40,7 @@ class TodoItemDatabase {
         content: item['content'],
         isCompleted: item['isCompleted'] == 1,
         priority: item['priority'],
+        deadline: DateTime.parse(item['deadline']),
       );
     }).toList();
   }
@@ -57,6 +58,7 @@ class TodoItemDatabase {
       content: rows[0]['content'],
       isCompleted: rows[0]['isCompleted'] == 1,
       priority: rows[0]['priority'],
+      deadline: DateTime.parse(rows[0]['deadline']),
     );
   }
 
@@ -66,6 +68,7 @@ class TodoItemDatabase {
       'content': formValue['content'],
       'isCompleted': 0,
       'priority': formValue['priority'],
+      'deadline': formValue['deadline'],
     }, conflictAlgorithm: ConflictAlgorithm.ignore);
   }
 
@@ -97,6 +100,7 @@ class TodoItem {
     required this.content,
     required this.isCompleted,
     required this.priority,
+    required this.deadline,
   });
 
   final int id;
@@ -104,4 +108,5 @@ class TodoItem {
   final String content;
   final bool isCompleted;
   final int priority;
+  final DateTime deadline;
 }
