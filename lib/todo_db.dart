@@ -91,6 +91,16 @@ class TodoItemDatabase {
     final todoItems = await getTodoItems();
     return todoItems.where((item) => item.isCompleted).length;
   }
+
+  Future<void> updateTodoItem(int id, Map<String, dynamic> formValue) async {
+    await database.update(
+      'TodoItem',
+      formValue,
+      where: 'id = ?',
+      whereArgs: [id],
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
 }
 
 class TodoItem {

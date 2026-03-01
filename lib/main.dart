@@ -8,6 +8,7 @@ import 'todo_list.dart';
 import 'todo_add.dart';
 import 'todo_db.dart';
 import 'detail_db.dart';
+import 'todo_edit.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -34,6 +35,7 @@ class MyTodoApp extends StatelessWidget {
         '/': (context) => const TodoListPage(),
         '/add': (context) => const TodoAddPage(),
         '/detail': (context) => const TodoDetailPage(),
+        '/edit': (context) => const TodoEditPage(),
       },
     );
   }
